@@ -1,0 +1,30 @@
+{
+	"name": "Glue",
+	"version": "0.0.1",
+	"versionDate": "2019-11-27",
+	"author": "hackolade",
+	"engines": {
+		"hackolade": "3.4.0",
+		"hackoladePlugin": "1.2.0"
+	},
+	"contributes": {
+		"target": {
+			"applicationTarget": "Glue",
+			"title": "AWS Glue Data Catalog",
+			"versions": [
+				"2.x",
+				"3.x"
+			]
+		},
+		"features": {
+			"nestedCollections": false,
+			"disablePatternField": false,
+			"enableForwardEngineering": true,
+			"disableMultipleTypes": false,
+			"enableReverseEngineering": true,
+			"disableChoices": false,
+			"enableJsonType": true
+		}
+	},
+	"description": "Hackolade plugin for AWS Glue Data Catalog"
+}
