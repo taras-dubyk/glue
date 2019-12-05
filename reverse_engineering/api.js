@@ -2,7 +2,7 @@
 
 const aws = require('aws-sdk');
 const logHelper = require('./logHelper');
-const schemaHelper = require('./thriftService/schemaHelper');
+const schemaHelper = require('./schemaHelper');
 
 this.glueInstance = null;
 
