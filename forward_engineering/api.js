@@ -4,6 +4,8 @@ const { getDatabaseStatement } = require('./helpers/databaseHelper');
 const { getTableStatement } = require('./helpers/tableHelper');
 const { getIndexes } = require('./helpers/indexHelper');
 const foreignKeyHelper = require('./helpers/foreignKeyHelper');
+const { getGlueDatabaseCreateStatement } = require('./helpers/awsCliScriptHelpers/glueDatabaseHeleper');
+const { getGlueTableCreateStatement } = require('./helpers/awsCliScriptHelpers/glueTableHelper');
 
 module.exports = {
 	generateScript(data, logger, callback) {
@@ -14,8 +16,15 @@ module.exports = {
 			const externalDefinitions = JSON.parse(data.externalDefinitions);
 			const containerData = data.containerData;
 			const entityData = data.entityData;
-			
-			callback(null, buildScript(
+
+			if (data.options.targetScriptOptions.keyword === 'awsCli') {
+				const script = buildAWSCLIScript(containerData, jsonSchema);
+				callback(null, script);
+				return;
+			} else {
+				callback(null, JSON.stringify(data, null, 2));
+			}
+			callback(null, buildHiveScript(
 				getDatabaseStatement(containerData),
 				getTableStatement(containerData, entityData, jsonSchema, [
 					modelDefinitions,
@@ -29,7 +38,7 @@ module.exports = {
 				])
 			));
 		} catch (e) {
-			logger.log('error', { message: e.message, stack: e.stack }, 'Hive Forward-Engineering Error');
+			logger.log('error', { message: e.message, stack: e.stack }, 'AWS Glue -Engineering Error');
 
 			setTimeout(() => {
 				callback({ message: e.message, stack: e.stack });
@@ -84,7 +93,7 @@ module.exports = {
 				return result;
 			}, []).join('\n');
 
-			callback(null, buildScript(
+			callback(null, buildHiveScript(
 				databaseStatement,
 				...entities,
 				foreignKeys
@@ -99,7 +108,17 @@ module.exports = {
 	}
 };
 
-const buildScript = (...statements) => {
+const buildAWSCLIScript = (containerData, tableSchema) => {
+	const dbStatement = getGlueDatabaseCreateStatement(containerData[0]);
+	const tableStatement = getGlueTableCreateStatement(tableSchema, containerData[0].name);
+	return composeCLIStatements([dbStatement, tableStatement]);
+}
+
+const composeCLIStatements = (statements = []) => {
+	return statements.join('\n\n');
+}
+
+const buildHiveScript = (...statements) => {
 	return statements.filter(statement => statement).join('\n\n');
 };
 

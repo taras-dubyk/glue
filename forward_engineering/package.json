@@ -1,11 +1,7 @@
 {
-  "name": "Hive",
+  "name": "Glue",
   "version": "1.0.0",
   "description": "",
   "author": "Hackolade",
-  "dependencies": {
-    "fs": "0.0.1-security",
-    "path": "0.12.7"
-  },
   "installed": true
 }

@@ -285,5 +285,6 @@ const getColumnsStatement = (columns) => {
 module.exports = {
 	getColumns,
 	getColumnsStatement,
-	getColumnStatement
+	getColumnStatement,
+	getTypeByProperty
 };
