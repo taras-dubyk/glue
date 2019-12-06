@@ -98,6 +98,8 @@ const mapTableData = ({ Table }) => {
 			description: Table.Description,
 			tableProperties: JSON.stringify(Table.Parameters),
 			compositePartitionKey: Table.PartitionKeys.map(item => item.Name),
+			compositeClusteringKey: Table.StorageDescriptor.BucketColumns,
+			sortedByKey: mapSortColumns(Table.StorageDescriptor.SortColumns),
 			compressed: Table.StorageDescriptor.Compressed,
 			location: Table.StorageDescriptor.Location,
 			numBuckets: Table.StorageDescriptor.NumberOfBuckets
@@ -117,6 +119,13 @@ const getColumns = (columns) => {
 		acc[item.Name] = Object.assign({}, schemaHelper.getJsonSchema(item.Type), { comments: item.Comment });
 		return acc;
 	}, {});
+}
+
+const mapSortColumns = (items) => {
+	return items.map(item => ({
+		name: item.Column,
+		type: item.SortOrder === 1 ? 'ascending' : 'descending'
+	}));
 }
 
 const logInfo = (step, connectionInfo, logger) => {
