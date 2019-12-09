@@ -124,11 +124,6 @@ making sure that you maintain a proper JSON format.
 				"propertyType": "text"
 			},
 			{
-				"propertyName": "Temporary",
-				"propertyKeyword": "temporaryTable",
-				"propertyType": "checkbox"
-			},
-			{
 				"propertyName": "External",
 				"propertyKeyword": "externalTable",
 				"propertyType": "checkbox"
@@ -149,7 +144,8 @@ making sure that you maintain a proper JSON format.
 					"JSONfile",
 					"by",
 					"input/output format"
-				]
+				],
+				"value": "input/output format"
 			},
 			{
 				"propertyName": "Row format",
