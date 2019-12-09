@@ -1,6 +1,7 @@
 'use strict';
 
 const aws = require('aws-sdk');
+const _ = require('lodash');
 const logHelper = require('./logHelper');
 const schemaHelper = require('./schemaHelper');
 
@@ -96,13 +97,20 @@ const mapTableData = ({ Table }) => {
 		collectionName: Table.Name,
 		entityLevel: {
 			description: Table.Description,
+			externalTable: Table.TableType === 'EXTERNAL_TABLE',
 			tableProperties: JSON.stringify(Table.Parameters),
 			compositePartitionKey: Table.PartitionKeys.map(item => item.Name),
 			compositeClusteringKey: Table.StorageDescriptor.BucketColumns,
 			sortedByKey: mapSortColumns(Table.StorageDescriptor.SortColumns),
 			compressed: Table.StorageDescriptor.Compressed,
 			location: Table.StorageDescriptor.Location,
-			numBuckets: Table.StorageDescriptor.NumberOfBuckets
+			numBuckets: Table.StorageDescriptor.NumberOfBuckets,
+			storedAsTable: 'input/output format',
+			StoredAsSubDirectories: Table.StorageDescriptor.StoredAsSubDirectories,
+			inputFormatClassname: Table.StorageDescriptor.InputFormat,
+			outputFormatClassname: Table.StorageDescriptor.OutputFormat,
+			serDeLibrary: getSerDeLibrary(Table.StorageDescriptor.SerdeInfo),
+			parameterPaths: mapSerDeParameters(Table.StorageDescriptor.SerdeInfo)
 		},
 		documents: [],
 		validation: {
@@ -126,6 +134,14 @@ const mapSortColumns = (items) => {
 		name: item.Column,
 		type: item.SortOrder === 1 ? 'ascending' : 'descending'
 	}));
+}
+
+const getSerDeLibrary = (data = {}) => {
+	return data.SerializationLibrary;
+}
+
+const mapSerDeParameters = (data = {}) => {
+	return _.get(data, 'Parameters.paths', '').split(',');
 }
 
 const logInfo = (step, connectionInfo, logger) => {
