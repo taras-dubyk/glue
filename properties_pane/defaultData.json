@@ -11,7 +11,8 @@
 	"collection": {
 		"collectionName": "New table",
 		"collectionUsers": [],
-		"collation": {}
+		"collation": {},
+		"storedAsTable": "input/output format"
 	},
 	"field": {
 		"name": "New column"
