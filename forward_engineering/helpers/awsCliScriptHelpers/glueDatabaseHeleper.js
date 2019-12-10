@@ -5,7 +5,6 @@ const getGlueDatabaseCreateStatement = (containerData) => {
 		DatabaseInput: {
 			Name: containerData.name,
 			Description: containerData.description,
-			// LocationUri: ''
 		}
 	}
 

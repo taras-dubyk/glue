@@ -1,11 +1,14 @@
 'use strict'
 
+const aws = require('aws-sdk');
+
 const { getDatabaseStatement } = require('./helpers/databaseHelper');
 const { getTableStatement } = require('./helpers/tableHelper');
 const { getIndexes } = require('./helpers/indexHelper');
 const foreignKeyHelper = require('./helpers/foreignKeyHelper');
 const { getGlueDatabaseCreateStatement } = require('./helpers/awsCliScriptHelpers/glueDatabaseHeleper');
 const { getGlueTableCreateStatement } = require('./helpers/awsCliScriptHelpers/glueTableHelper');
+const { getApiStatements } = require('./helpers/awsCliScriptHelpers/applyToInstanceHelper');
 
 module.exports = {
 	generateScript(data, logger, callback) {
@@ -17,12 +20,10 @@ module.exports = {
 			const containerData = data.containerData;
 			const entityData = data.entityData;
 
-			if (data.options.targetScriptOptions.keyword === 'awsCli') {
+			if (!data.isUpdateScript) {
 				const script = buildAWSCLIScript(containerData, jsonSchema);
 				callback(null, script);
 				return;
-			} else {
-				callback(null, JSON.stringify(data, null, 2));
 			}
 			callback(null, buildHiveScript(
 				getDatabaseStatement(containerData),
@@ -54,6 +55,13 @@ module.exports = {
 			const databaseStatement = getDatabaseStatement(containerData);
 			const jsonSchema = parseEntities(data.entities, data.jsonSchema);
 			const internalDefinitions = parseEntities(data.entities, data.internalDefinitions);
+
+			if (!data.isUpdateScript) {
+				const script = buildAWSCLIModelScript(containerData, jsonSchema);
+				callback(null, script);
+				return;
+			}
+
 			const foreignKeyHashTable = foreignKeyHelper.getForeignKeyHashTable(
 				data.relationships,
 				data.entities,
@@ -105,6 +113,55 @@ module.exports = {
 				callback({ message: e.message, stack: e.stack });
 			}, 150);
 		}
+	},
+
+	async applyToInstance(data, logger, callback, app) {
+		if (!data.script) {
+			return callback({ message: 'Empty script' });
+		}
+
+		logger.clear();
+		logger.log('info', data, data.hiddenKeys);
+
+		const glueInstance = getGlueInstance(data);
+
+		try {
+			const { db, table } = getApiStatements(data.script);
+			if (db.length === 0 && table.length === 0) {
+				return callback({ message: 'HiveQL is not supported for this operation' });
+			}
+			const dbCreatePromises = db.map(async statement => {
+				logger.progress({ message: 'Creating database', containerName: statement.DatabaseInput.Name });
+				return await glueInstance.createDatabase(statement).promise();
+			});
+			await Promise.all(dbCreatePromises);
+			const tableCreatePromises = table.map(async statement => {
+				logger.progress({
+					message: 'Creating database',
+					containerName: statement.DatabaseName,
+					entityName: statement.TableInput.Name
+				});
+				return await glueInstance.createTable(statement).promise();
+			});
+			await Promise.all(tableCreatePromises);
+			callback();
+		} catch(err) {
+			callback(err);
+		}
+	},
+
+	async testConnection(connectionInfo, logger, callback, app) {
+		logger.log('info', connectionInfo, 'Test connection', connectionInfo.hiddenKeys);
+
+		const glueInstance = getGlueInstance(connectionInfo);
+
+		try {
+			await glueInstance.getDatabases().promise();
+			callback();
+		} catch (err) {
+			logger.log('error', { message: err.message, stack: err.stack, error: err }, 'Connection failed');
+			callback(err);
+		}
 	}
 };
 
@@ -112,6 +169,20 @@ const buildAWSCLIScript = (containerData, tableSchema) => {
 	const dbStatement = getGlueDatabaseCreateStatement(containerData[0]);
 	const tableStatement = getGlueTableCreateStatement(tableSchema, containerData[0].name);
 	return composeCLIStatements([dbStatement, tableStatement]);
+}
+
+const buildAWSCLIModelScript = (containerData, tablesSchemas = {}) => {
+	const dbStatement = getGlueDatabaseCreateStatement(containerData[0]);
+	const tablesStatements = Object.entries(tablesSchemas).map(([key, value]) => {
+		return getGlueTableCreateStatement(value, containerData[0].name);
+	});
+	return composeCLIStatements([dbStatement, ...tablesStatements]);
+}
+
+const getGlueInstance = (connectionInfo) => {
+	const { accessKeyId, secretAccessKey, region } = connectionInfo;
+	aws.config.update({ accessKeyId, secretAccessKey, region });
+	return new aws.Glue();
 }
 
 const composeCLIStatements = (statements = []) => {
