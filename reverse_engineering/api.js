@@ -113,7 +113,7 @@ const mapTableData = ({ Table }) => {
 		entityLevel: {
 			description: Table.Description,
 			externalTable: Table.TableType === 'EXTERNAL_TABLE',
-			tableProperties: JSON.stringify(Table.Parameters),
+			tableProperties: JSON.stringify(Table.Parameters, null, 2),
 			compositePartitionKey: Table.PartitionKeys.map(item => item.Name),
 			compositeClusteringKey: Table.StorageDescriptor.BucketColumns,
 			sortedByKey: mapSortColumns(Table.StorageDescriptor.SortColumns),

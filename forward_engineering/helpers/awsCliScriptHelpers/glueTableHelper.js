@@ -17,18 +17,9 @@ const getGlueTableCreateStatement = (tableSchema, databaseName) => {
 				SerdeInfo: mapSerdeInfo(tableSchema),
 				BucketColumns: getGlueTableClusteringKeyColumns(tableSchema.properties),
 				SortColumns: getGlueTableSortingColumns(tableSchema.sortedByKey, tableSchema.properties),
-				// Parameters: {
-				// 	KeyName: ''
-				// },
-				// SkewedInfo: {
-				// 	SkewedColumnNames: [''],
-				// 	SkewedColumnValues: [''],
-				// 	SkewedColumnValueLocationMaps: {
-				// 		KeyName: ''
-				// 	}
-				// },
 				StoredAsSubDirectories: tableSchema.StoredAsSubDirectories
 			},
+			Parameters: mapTableParameters(tableSchema.tableProperties),
 			PartitionKeys: getGluePartitionKeyTableColumns(tableSchema.properties),
 			TableType: tableSchema.externalTable ? 'EXTERNAL_TABLE' : ''
 		}
@@ -53,6 +44,14 @@ const getSerdePathParams = (parameterPaths = [], properties) => {
 		const propertyName = property && property[0];
 		return propertyName;
 	}).join(',');
+}
+
+const mapTableParameters = (properties) => {
+	try {
+		return JSON.parse(properties);
+	} catch(err) {
+		return {};
+	}
 }
 
 module.exports = {
