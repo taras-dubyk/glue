@@ -52,7 +52,11 @@ module.exports = {
 				const result = await Promise.all(dbsCollections);
 				cb(null, result);
 			} catch(err) {
-				logger.log('error', { message: err.message, stack: err.stack, error: err }, 'Retrieving databases and tables information');
+				logger.log(
+					'error',
+					{ message: err.message, stack: err.stack, error: err },
+					'Retrieving databases and tables information'
+				);
 				cb(err);
 			}
 		};
@@ -72,7 +76,14 @@ module.exports = {
 			try {
 				const tablesDataPromise = databases.map(async dbName => {
 					const dbTables = tables[dbName].map(async tableName => {
-						const rawTableData = await this.glueInstance.getTable({ DatabaseName: dbName, Name: tableName }).promise();
+						const rawTableData = await this.glueInstance
+							.getTable({ DatabaseName: dbName, Name: tableName })
+							.promise();
+						logger.progress({
+							message: 'Getting table data',
+							containerName: dbName,
+							entityName: tableName
+						});
 						return mapTableData(rawTableData);
 					});
 					return await Promise.all(dbTables);
@@ -82,7 +93,11 @@ module.exports = {
 				const flatTablesData = tablesData.reduce((acc, val) => acc.concat(val), []);
 				cb(null, flatTablesData);
 			} catch(err) {
-				logger.log('error', { message: err.message, stack: err.stack, error: err }, 'Retrieving databases and tables information');
+				logger.log(
+					'error',
+					{ message: err.message, stack: err.stack, error: err },
+					'Retrieving databases and tables information'
+				);
 				cb();
 			}
 		};
