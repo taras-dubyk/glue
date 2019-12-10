@@ -144,8 +144,7 @@ making sure that you maintain a proper JSON format.
 					"JSONfile",
 					"by",
 					"input/output format"
-				],
-				"value": "input/output format"
+				]
 			},
 			{
 				"propertyName": "Row format",

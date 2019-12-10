@@ -1,14 +1,12 @@
 {
-	"extension": "hql",
+	"extension": "txt",
 	"filterName": "AWS Glue CLI",
 	"namePrefix": "Glue",
-	"hasUpdateScript": false,
-	"options": [
-		{ "name": "AWS Glue CLI", "keyword": "awsCli" },
-		{ "name": "Hive Query Language", "keyword": "hql" }
-	],
+	"hasUpdateScript": true,
+	"applyScriptToInstance": true,
 	"level": {
 		"entity": true,
-		"container": false
-	}
+		"container": true
+	},
+	"resolvedDefinitions": true
 }
